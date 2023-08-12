@@ -7,7 +7,7 @@ require('./database.js');
 const app = express();
 
 app.use(cors({
-    origin: 'exp://192.168.1.100:19000'
+    origin: 'exp://192.168.1.103:19000'
 }))
 
 app.use(morgan('dev'));
