@@ -3,18 +3,22 @@ const User = require('./models/User.js');
 const Code = require('./models/Code.js');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
+const formidable = require('formidable');
 const { SECRET_KEY, USER_EMAIL, PASSWORD_EMAIL } = require ('./config.js');
 const verifyToken = require('./verifyToken.js');
 const { createAccount, recoverAccount, updateAccount } = require('./templates.js');
 const router = Router();
 
 router.post('/signup', async (req, res, next) => {
-    const { username, email, password } = req.body;
+    const { name, lastname, username, email, password } = req.body;
 
     const user = new User({
+        name: name,
+        lastname: lastname,
         username: username,
         email: email,
-        password: password
+        password: password,
+        photo: ""
     });
 
     user.password = await user.encryptPassword(user.password);
@@ -25,20 +29,24 @@ router.post('/signup', async (req, res, next) => {
 });
 
 router.get('/me', verifyToken, async (req, res, next) => {
-    const user = await User.findById(req.userId);
-    
-    if (!user) { return res.status(404).send('Usuario no encontrado'); }
-    res.json(user);
+    try{
+        const user = await User.findById(req.userId);
+        
+        if (!user) { return res.status(404).send('Usuario no encontrado'); }
+        res.json(user);
+    } catch (error) {
+        return res.status(500).send("Error al obtener datos del usuario");
+    }
 });
 
 router.post('/signin', async (req, res, next) => {
     const { username, password } = req.body;
     const user = await User.findOne({username: username});
     
-    if (!user) { return res.status(404).send("Usuario incorrecto"); }
+    if (!user) { return res.status(404).send("Usuario o contraseña incorrectos"); }
     const validPassword = await user.validatePassword(password);
     
-    if (!validPassword) { return res.status(404).send("Contraseña incorrecta"); }
+    if (!validPassword) { return res.status(404).send("Usuario o contraseña incorrectos"); }
     const token = jwt.sign({id: user._id}, SECRET_KEY, { expiresIn: 60 * 60 * 24 });
 
     res.json({auth: true, token});
@@ -179,7 +187,6 @@ router.post('/accessAccount', async (req, res, next) => {
     const validPassword = await user.validatePassword(password);
     
     if (!validPassword) { return res.status(404).send("Contraseña incorrecta"); }
-    const token = jwt.sign({id: user._id}, SECRET_KEY, { expiresIn: 60 * 60 * 24 });
     
     res.json({auth: true, message: 'success'});
 });
@@ -240,18 +247,40 @@ router.post('/verifyEmailUpdate', async (req, res, next) => {
 });
 
 router.post('/updateAccount', async (req, res) => {
-    const { username, email, password, olduser } = req.body;
-    const user = await User.findOne({ username: olduser });
+    try {
+        const form = new formidable.IncomingForm();
 
-    if (!user) {
-        res.status(400).send('El usuario no existe');
-    } else {
-        user.username = username;
-        user.email = email;
-        user.password = await user.encryptPassword(password);
-        await user.save();
+        form.parse(req, async (err, fields, files) => {
+            const { name, lastname, username, email, password, photo, olduser } = fields;
+            const user = await User.findOne({ username: olduser[0] });
 
-        res.status(200).send('Su cuenta ha sido modificada con éxito');
+            if (!user) {
+                res.status(400).send('El usuario no existe');
+            } else {
+                user.name = name[0];
+                user.lastname = lastname[0];
+                user.username = username[0];
+                user.email = email[0];
+                user.password = await user.encryptPassword(password[0]);
+                user.photo = photo[0];
+                await user.save();
+
+                res.status(200).send('Su cuenta ha sido modificada con éxito');
+            }
+        });
+    } catch (error) {
+        res.status(500).send("Error al actulizar la cuenta");
+    }
+});
+
+router.get('/getUsers', async (req, res) => {
+    try {
+      const users = await User.find({}, 'username');
+      const usernames = users.map((user) => user.username);
+  
+      res.json(usernames);
+    } catch (error) {
+      res.status(500).send("Error al obtener los nombres de los consultores");
     }
 });
 
