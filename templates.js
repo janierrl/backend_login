@@ -1,5 +1,5 @@
 async function createAccount(username, codeRandom) {
-    return `
+  return `
         <!DOCTYPE html>
         <html>
             <head>
@@ -179,7 +179,7 @@ async function createAccount(username, codeRandom) {
 }
 
 async function recoverAccount(username, codeRandom) {
-    return `
+  return `
         <!DOCTYPE html>
         <html>
             <head>
@@ -359,7 +359,7 @@ async function recoverAccount(username, codeRandom) {
 }
 
 async function updateAccount(username, codeRandom) {
-    return `
+  return `
         <!DOCTYPE html>
         <html>
             <head>
@@ -539,7 +539,7 @@ async function updateAccount(username, codeRandom) {
 }
 
 module.exports = {
-    createAccount,
-    recoverAccount,
-    updateAccount
-}
+  createAccount,
+  recoverAccount,
+  updateAccount,
+};
