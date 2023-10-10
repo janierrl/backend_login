@@ -2,9 +2,12 @@ const { Schema, model } = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const userSchema = new Schema({
+    name: String,
+    lastname: String,
     username: String,
     email: String,
-    password: String
+    password: String,
+    photo: String
 });
 
 userSchema.methods.encryptPassword = async (password) => {
