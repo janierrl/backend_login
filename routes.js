@@ -1,6 +1,7 @@
 const { Router } = require("express");
 const User = require("./models/User.js");
 const Code = require("./models/Code.js");
+const Enterprise = require("./models/Enterprise.js");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const formidable = require("formidable");
@@ -14,7 +15,7 @@ const {
 const router = Router();
 
 router.post("/signup", async (req, res, next) => {
-  const { name, lastname, username, email, password } = req.body;
+  const { name, lastname, username, email, password, enterprise } = req.body;
 
   const user = new User({
     name: name,
@@ -23,6 +24,7 @@ router.post("/signup", async (req, res, next) => {
     email: email,
     password: password,
     photo: "",
+    enterprise: enterprise,
   });
 
   user.password = await user.encryptPassword(user.password);
@@ -328,6 +330,41 @@ router.get("/getUsers", async (req, res) => {
     res.json(usernames);
   } catch (error) {
     res.status(500).send("Error al obtener los nombres de los consultores");
+  }
+});
+
+router.post("/setEnterprise", async (req, res, next) => {
+  const { name, bucket } = req.body;
+
+  const enterprise = new Enterprise({
+    name: name,
+    bucket: bucket,
+  });
+
+  await enterprise.save();
+
+  res.json({ create: true });
+});
+
+router.get("/getEnterprises", async (req, res) => {
+  try {
+    const enterprises = await Enterprise.find({}, "name");
+    const enterprisenames = enterprises.map((enterprise) => enterprise.name);
+
+    res.json(enterprisenames);
+  } catch (error) {
+    res.status(500).send("Error de conexión");
+  }
+});
+
+router.post("/getBucket", async (req, res) => {
+  try {
+    const enterprise = await Enterprise.findOne({ name: req.body.enterprise });
+    const bucket = enterprise.bucket;
+
+    res.json(bucket);
+  } catch (error) {
+    res.status(500).send("Error de conexión");
   }
 });
 
